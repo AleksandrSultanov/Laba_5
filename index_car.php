@@ -1,20 +1,23 @@
 <?php
 session_start();
-require 'func.php';
+require 'php/func.php';
 
-if (isset($_GET['id_salon']) && isset($_GET['mark'])) {
-$mark = htmlspecialchars($_GET['mark']);
+if ((isset($_POST["id_car"])))
+$rez = delete_car($_POST["id_car"]);
+
+if (isset($_GET['id_salon'])) {
 $id_salon = htmlspecialchars($_GET['id_salon']);
 $table = table_for_cars($id_salon); }
-else {header('Location: index_salon.php');}
+else header('Location: index_salon.php');
 
-if ((isset($_POST['check'])) && (isset($_POST['model'])) &&
-    (isset($_POST['year'])) && (isset($_POST['cost'])) && (isset($_POST['mileage'])))
-{
+if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])) {
+    $mark = htmlspecialchars($_GET['mark']);
     $car = car_array($_POST, $mark);
-    $id = add($car, 'car');
-    add_relation($id_salon, $id);
-    header ("Location: index_car.php?mark=$mark&id_salon=$id_salon");
+    $rez = add_car($car, 'car', $id_salon);
+    if ($rez === 1)
+        header ("Location: index_car.php?mark=$mark&id_salon=$id_salon");
+    else
+        header('Location: index_salon.php');
 }
 ?>
 <!DOCTYPE html>
@@ -28,10 +31,10 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) &&
     <title>Тачка.ру: Работа с БД (автомобили)</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="icon" href="Pictures\favicon.png">
-    <link href="bootstrap\bootstrap.min.css" rel="stylesheet">
-    <link href="css_for_BD.css" rel="stylesheet">
-    <link href="bootstrap\form-validation.css" rel="stylesheet">
+    <link rel="icon" href="pictures/favicon.png">
+    <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="css/css_main.css" rel="stylesheet">
+    <link href="bootstrap/form-validation.css" rel="stylesheet">
     <!-- Custom styles for this template -->
 </head>
 
@@ -115,16 +118,22 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) &&
                 <div class="col-md-8 order-md-2 mb-6">
                     <h4 class="d-flex justify-content-between align-items-center mb-3">
                         <?php if(!$table){?>
-                        <div class="alert alert-warning" role="alert">
-                            Добавленных автомобилей пока нет!
+                        <div class="alert alert-warning container" role="alert">
+                            Добавленных автомобилей пока нет <br>
+                            или такого автосаллона не существует!
                         </div>
                         <?php } else {?>
                         <span class="text">Добавленные автомобили</span>
                         <span class="badge badge-secondary badge-pill"><?php if ($table) echo count($table);?></span>
                     </h4>
-                    <?php if (isset($_GET['edit'])){?>
+                    <?php if (isset($_GET['edit']) or (isset($rez) and ($rez === 1))) { ?>
                         <div class="alert alert-success" role="alert">
-                            Изменение произошло успешно!
+                            Действие произошло успешно!
+                        </div>
+                    <?php } ?>
+                    <?php if ((isset($rez)) and ($rez === -1)) { ?>
+                        <div class="alert alert-danger" role="alert">
+                            Действие произошло с ошибкой!
                         </div>
                     <?php } ?>
                     <ul class="list-group mb-3">
@@ -152,7 +161,7 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) &&
                                     <td>
                                         <div class="btn-group">
                                             <a href="edit_car.php?id_salon=<?php echo $id_salon?>&mark=<?php echo $row['mark']?>&id_car=<?php echo $row['id_car']?>" class="btn btn-warning">Изменить</a>
-                                            <a href="delete.php?id=<?php echo $row['id']?>" class="btn btn-danger">Удалить</a>
+                                            <button type="button" data-id_car="<?php echo $row["id_car"] ?>" class="btn btn-danger" id="delete_btn">Удалить</button>
                                         </div>
                                     </td>
                                 </tr>
@@ -165,6 +174,13 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) &&
           </div>
     </div>
 </main>
-<script type="text/javascript" src="validate.js" ></script>
+
+<form hidden id="car_delete" method="POST">
+    <input name="id_car" id="id_car">
+</form>
+
+<script type="text/javascript" src="js/validate.js" ></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/delete_car.js"></script>
 </body>
 </html>

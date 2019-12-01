@@ -1,15 +1,18 @@
 <?php
 session_start();
-require 'func.php';
+require 'php/func.php';
 
-$table = table('salon');
+if ((isset($_POST["id_salon"])))
+    $rez = delete_salon($_POST["id_salon"]);
 
 if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])) && (isset($_POST['email'])))
 {
     $salon = salon_array($_POST);
-    add($salon, 'salon');
+    add_salon($salon, 'salon');
     header('Location: index_salon.php');
 }
+
+$table = table('salon');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,10 +25,10 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
     <title>Тачка.ру: Работа с БД (салоны)</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="icon" href="Pictures\favicon.png">
-    <link href="bootstrap\bootstrap.min.css" rel="stylesheet">
-    <link href="css_for_BD.css" rel="stylesheet">
-    <link href="bootstrap\form-validation.css" rel="stylesheet">
+    <link rel="icon" href="pictures\favicon.png">
+    <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="css/css_main.css" rel="stylesheet">
+    <link href="bootstrap/form-validation.css" rel="stylesheet">
     <!-- Custom styles for this template -->
 </head>
 
@@ -65,21 +68,21 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
         <div class="row">
             <div class="col-md-4 order-md-1">
                 <h4 class="mb-3">Добавить автосалон</h4>
-                    <form class="needs-validation" novalidate action="index_salon.php" method = "POST">
-                        <div class="mb-3">
-                            <label for="mark">Марка</label>
-                            <input type="mark" class="form-control" name="mark"  placeholder="Tesla" value="" required maxlength = "32" pattern="\w*" >
-                            <div class="invalid-feedback">
-                                Марка автосалона введена не верно.
-                            </div>
+                <form class="needs-validation" novalidate action="index_salon.php" method = "POST">
+                    <div class="mb-3">
+                        <label for="mark">Марка</label>
+                        <input type="mark" class="form-control" name="mark"  placeholder="Tesla" value="" required maxlength = "32" pattern="\w*" >
+                        <div class="invalid-feedback">
+                            Марка автосалона введена не верно.
                         </div>
-                        <div class="mb-3">
-                            <label for="tel">Номер телефона</label>
-                            <input type="tel" class="form-control" name="tel" placeholder="+78005553535" pattern="^\+7\d{3}\d{7}$" value="" required maxlength = "12">
-                            <div class="invalid-feedback">
-                                Номер телефона введен не верно.
-                            </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tel">Номер телефона</label>
+                        <input type="tel" class="form-control" name="tel" placeholder="+78005553535" pattern="^\+7\d{3}\d{7}$" value="" required maxlength = "12">
+                        <div class="invalid-feedback">
+                            Номер телефона введен не верно.
                         </div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="email">Электронная почта</label>
@@ -94,17 +97,24 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
             </div>
             <div class="col-md-8 order-md-2 mb-6">
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
-                <?php if(!$table){?>
-                    <div class="alert alert-warning" role="alert">
-                        Добавленных автосалонов пока нет!
-                    </div>
-                <?php } else {?>
+                    <?php if(!$table){?>
+                        <div class="alert alert-warning container" role="alert">
+                            Добавленных автосалонов пока нет!
+                        </div>
+                    <?php } else {?>
                     <span class="text">Добавленные автосалоны</span>
                     <span class="badge badge-secondary badge-pill"><?php echo count($table);?></span>
                 </h4>
-                <?php if (isset($_GET['edit'])){?>
+                <?php if (isset($_GET['edit']) or (isset($rez) and ($rez === 1))) { ?>
                     <div class="alert alert-success" role="alert">
-                        Изменение произошло успешно!
+                        Действие произошло успешно!
+                    </div>
+                <?php } ?>
+                <?php if ((isset($rez)) and ($rez === -1)) { ?>
+                    <div class="alert alert-danger" role="alert">
+                        Действие произошло с ошибкой!
+                        Нельзя удалить связный объект.
+                        Сначала удалите все автомобили в автосалоне.
                     </div>
                 <?php } ?>
                 <ul class="list-group mb-3">
@@ -120,18 +130,18 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
                         </thead>
                         <tbody>
                         <?php $count = 1; foreach ($table as $key => $row) {?>
-                        <tr>
-                            <th scope="row"><?php echo $count++;?></th>
-                            <td><a href="index_car.php?mark=<?php echo $row['mark']?>&id_salon=<?php echo $row['id_salon']?>"><?php echo $row['mark']?></a></td>
-                            <td><?php echo $row['number']?></td>
-                            <td><?php echo $row['email']?></td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="edit_salon.php?id_salon=<?php echo $row['id_salon']?>" class="btn btn-warning">Изменить</a>
-                                    <a href="delete.php?id_salon=<?php echo $row['id_salon']?>" class="btn btn-danger">Удалить</a>
-                                </div>
-                            </td>
-                        </tr>
+                            <tr>
+                                <th scope="row"><?php echo $count++;?></th>
+                                <td><a href="index_car.php?mark=<?php echo $row['mark']?>&id_salon=<?php echo $row['id_salon']?>"><?php echo $row['mark']?></a></td>
+                                <td><?php echo $row['number']?></td>
+                                <td><?php echo $row['email']?></td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="edit_salon.php?id_salon=<?php echo $row['id_salon']?>" class="btn btn-warning">Изменить</a>
+                                        <button type="button" data-id_salon="<?php echo $row["id_salon"] ?>" class="btn btn-danger" id="delete_btn">Удалить</button>
+                                    </div>
+                                </td>
+                            </tr>
                         <?php } ?>
                         <?php } ?>
                         </tbody>
@@ -141,9 +151,14 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
         </div>
     </div>
 </main>
-<script type="text/javascript" src="validate.js" ></script>
+
+<form hidden id="salon_delete" method="POST">
+    <input name="id_salon" id="id_salon">
+</form>
+
+<script type="text/javascript" src="js/validate.js"></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/delete_salon.js"></script>
+
 </body>
 </html>
-
-
-

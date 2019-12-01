@@ -1,11 +1,14 @@
 <?php
 session_start();
-require 'func.php';
+require 'php/func.php';
 
-if (isset($_GET['id_car']) and isset($_GET['mark'])) {
-$id_car = htmlspecialchars($_GET['id_car']);
-$mark = htmlspecialchars($_GET['mark']);
-$row = row("car", $id_car); }
+if (isset($_GET['id_car']) and isset($_GET['mark']))
+{
+    $id_car = htmlspecialchars($_GET['id_car']);
+    $rez = edit_check($id_car, "car");
+    $mark = htmlspecialchars($_GET['mark']);
+    $row = row("car", $id_car);
+}
 
 if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'])) &&
     (isset($_POST['cost'])) && (isset($_POST['mileage'])))
@@ -16,7 +19,7 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
     if (isset($_GET['id_salon']))
         header ("Location: index_car.php?mark=$mark&id_salon=$id_salon&edit=");
     else
-        header ("Location: all_cars.php?edit=");
+        header ("Location: all_cars.php?id_car=$id_car");
 }
 ?>
 <!DOCTYPE html>
@@ -30,10 +33,10 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
     <title>Тачка.ру: Работа с БД (автомобили)</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="icon" href="Pictures\favicon.png">
-    <link href="bootstrap\bootstrap.min.css" rel="stylesheet">
-    <link href="css_for_BD.css" rel="stylesheet">
-    <link href="bootstrap\form-validation.css" rel="stylesheet">
+    <link rel="icon" href="pictures/favicon.png">
+    <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="css/css_main.css" rel="stylesheet">
+    <link href="bootstrap/form-validation.css" rel="stylesheet">
     <!-- Custom styles for this template -->
 </head>
 
@@ -75,6 +78,14 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-4 offset-md-4">
+                <?php if($rez == -1) {?>
+                    <div class="alert alert-danger" role="alert">
+                            Такого автомобиля не существует!<br>
+                            Ваще редактирование ни к чему не приведет.<br>
+                            Возможно, кто-то удалил этот автомобиль.<br>
+                            Рекомендую вернуться на список всех автомобилей.
+                    </div>
+                 <?php } ?>
                 <h4 class="mb-3">Характеристики автомобиля</h4>
                 <form class="needs-validation" novalidate method = "POST">
 
@@ -116,7 +127,9 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
         </div>
     </div>
 </main>
-<script type="text/javascript" src="validate.js" ></script>
+
+<script type="text/javascript" src="js/validate.js" ></script>
+
 </body>
 </html>
 

@@ -1,13 +1,15 @@
 <?php
 session_start();
-require 'func.php';
+require 'php/func.php';
 
 if (isset($_GET['id_salon']))
-$id_salon = htmlspecialchars($_GET['id_salon']);
-
+{
+    $id_salon = htmlspecialchars($_GET['id_salon']);
+    $rez = edit_check($id_salon, "salon");
+}
 $row = row("salon", $id_salon);
 
-if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])) && (isset($_POST['email'])))
+if ((isset($_POST['check']) && (isset($_POST['mark'])) && (isset($_POST['tel'])) && (isset($_POST['email']))))
 {
     $salon = salon_array($_POST);
     save($salon, "salon", $id_salon);
@@ -25,10 +27,10 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
     <title>Тачка.ру: Работа с БД (салоны)</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="icon" href="Pictures\favicon.png">
-    <link href="bootstrap\bootstrap.min.css" rel="stylesheet">
-    <link href="css_for_BD.css" rel="stylesheet">
-    <link href="bootstrap\form-validation.css" rel="stylesheet">
+    <link rel="icon" href="Pictures/favicon.png">
+    <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="css/css_main.css" rel="stylesheet">
+    <link href="bootstrap/form-validation.css" rel="stylesheet">
     <!-- Custom styles for this template -->
 </head>
 
@@ -71,6 +73,14 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
         <div class="row">
             <div class="col-md-4 offset-md-4">
                 <h4 class="mb-3">Информация о салоне</h4>
+                <?php if($rez == -1) {?>
+                    <div class="alert alert-danger" role="alert">
+                        Такого автосалона не существует!<br>
+                        Ваще редактирование ни к чему не приведет.<br>
+                        Возможно, кто-то удалил этот автосалон.<br>
+                        Рекомендую вернуться на список всех автосолонов.<br>
+                    </div>
+                <?php } ?>
                     <form class="needs-validation" novalidate method = "POST">
                         <div class="mb-3">
                             <label for="mark">Марка</label>
@@ -101,7 +111,9 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
         </div>
     </div>
 </main>
-<script type="text/javascript" src="validate.js" ></script>
+
+<script type="text/javascript" src="js/validate.js" ></script>
+
 </body>
 </html>
 

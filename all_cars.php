@@ -1,9 +1,14 @@
 <?php
 session_start();
-require 'func.php';
+require 'php/func.php';
+
+if ((isset($_POST["id_car"])))
+    $rez1 = delete_car($_POST["id_car"]);
 
 $table = table('car');
 
+if (isset($_GET["id_car"]))
+    $rez2 = edit_check(htmlspecialchars($_GET["id_car"]), "car");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,10 +21,10 @@ $table = table('car');
     <title>Тачка.ру: Работа с БД (автомобили)</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel="icon" href="Pictures\favicon.png">
-    <link href="bootstrap\bootstrap.min.css" rel="stylesheet">
-    <link href="css_for_BD.css" rel="stylesheet">
-    <link href="bootstrap\form-validation.css" rel="stylesheet">
+    <link rel="icon" href="pictures/favicon.png">
+    <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="css/css_main.css" rel="stylesheet">
+    <link href="bootstrap/form-validation.css" rel="stylesheet">
     <!-- Custom styles for this template -->
 </head>
 
@@ -59,13 +64,23 @@ $table = table('car');
         <div class="row">
             <div class="col-md-7 offset-md-3">
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
+                    <?php if(!$table){?>
+                        <div class="alert alert-warning container" role="alert">
+                            Добавленных автомобилей пока нет!
+                        </div>
+                    <?php } else {?>
                     <span class="text">Все добавленные автомобили</span>
                     <span class="badge badge-secondary badge-pill"><?php echo count($table);?></span>
                 </h4>
                 <div class="mb-3">
-                    <?php if (isset($_GET['edit'])){?>
+                    <?php if ((isset($rez1) and ($rez1 === 1)) or (isset($rez2) and ($rez2 === 1))) {  ?>
                         <div class="alert alert-success" role="alert">
-                            Изменение произошло успешно!
+                            Действие произошло успешно!
+                        </div>
+                    <?php } ?>
+                    <?php if (((isset($rez1)) and ($rez1 === -1)) or (isset($rez2) and ($rez2 === -1))) { ?>
+                        <div class="alert alert-danger" role="alert">
+                            Действие произошло с ошибкой!
                         </div>
                     <?php } ?>
                 </div>
@@ -94,10 +109,11 @@ $table = table('car');
                                 <td>
                                     <div class="btn-group">
                                         <a href="edit_car.php?mark=<?php echo $row['mark']?>&id_car=<?php echo $row['id_car']?>" class="btn btn-warning">Изменить</a>
-                                        <a href="delete.php?id=<?php echo $row['id']?>" class="btn btn-danger">Удалить</a>
+                                        <button type="button" data-id_car="<?php echo $row["id_car"] ?>" class="btn btn-danger" id="delete_btn">Удалить</button>
                                     </div>
                                 </td>
                             </tr>
+                        <?php } ?>
                         <?php } ?>
                         </tbody>
                     </table>
@@ -108,6 +124,14 @@ $table = table('car');
         </div>
     </div>
 </main>
-<script type="text/javascript" src="validate.js" ></script>
+
+<form hidden id="car_delete" method="POST">
+    <input name="id_car" id="id_car">
+</form>
+
+<script type="text/javascript" src="js/validate.js" ></script>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/delete_car.js"></script>
+
 </body>
 </html>
