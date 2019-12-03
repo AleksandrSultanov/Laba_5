@@ -10,15 +10,8 @@ $id_salon = htmlspecialchars($_GET['id_salon']);
 $table = table_for_cars($id_salon); }
 else header('Location: index_salon.php');
 
-if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])) {
-    $mark = htmlspecialchars($_GET['mark']);
-    $car = car_array($_POST, $mark);
-    $rez = add_car($car, 'car', $id_salon);
-    if ($rez === 1)
-        header ("Location: index_car.php?mark=$mark&id_salon=$id_salon");
-    else
-        header('Location: index_salon.php');
-}
+if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark']))
+    add_c($_POST, $_GET, $_FILES["user_file"], $id_salon);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,7 +71,7 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])
         <div class="row">
             <div class="col-md-4 order-md-1">
                 <h4 class="mb-3">Добавить автомобиль</h4>
-                <form class="needs-validation" novalidate  method = "POST">
+                <form class="needs-validation" novalidate  enctype="multipart/form-data" method = "POST">
 
                     <div class="mb-3">
                         <label for="model">Модель</label>
@@ -112,6 +105,14 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])
                         </div>
                     </div>
 
+                    <div class="mb-3 custom-file">
+                        <input type="file" name="user_file"  class="custom-file-input" id="customFile" required>
+                        <label class="custom-file-label" for="customFile">Выберите файл</label>
+                        <div class="invalid-feedback">
+                            Добавьте изображение.
+                        </div>
+                    </div>
+
                     <input href="" class="btn btn-primary btn-lg btn-block" name="check" value="Добавить автомобиль" type="submit">
                 </form>
             </div>
@@ -126,12 +127,12 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])
                         <span class="text">Добавленные автомобили</span>
                         <span class="badge badge-secondary badge-pill"><?php if ($table) echo count($table);?></span>
                     </h4>
-                    <?php if (isset($_GET['edit']) or (isset($rez) and ($rez === 1))) { ?>
+                    <?php if ((isset($_GET['edit']) and ($_GET['edit'] == "true")) or (isset($rez) and ($rez === 1))) { ?>
                         <div class="alert alert-success" role="alert">
                             Действие произошло успешно!
                         </div>
                     <?php } ?>
-                    <?php if ((isset($rez)) and ($rez === -1)) { ?>
+                    <?php if (((isset($rez)) and ($rez === -1))  or ((isset($_GET['edit']) and ($_GET['edit'] == "false"))) or ((isset($_GET['add']) and ($_GET['add'] == "false")))) { ?>
                         <div class="alert alert-danger" role="alert">
                             Действие произошло с ошибкой!
                         </div>
@@ -146,6 +147,7 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])
                                 <th scope="col">Год</th>
                                 <th scope="col">Цена</th>
                                 <th scope="col">Пробег</th>
+                                <th scope="col">Изображение</th>
                                 <th scope="col">Действия</th>
                             </tr>
                             </thead>
@@ -158,6 +160,9 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark'])
                                     <td><?php echo $row['production_year']?></td>
                                     <td><?php echo $row['cost']?></td>
                                     <td><?php echo $row['mileage']?></td>
+                                    <?php if($row['file_path'] != "0") { ?>
+                                        <td><img src="<?php echo $row['file_path']?>" class="img-thumbnail" alt="Responsive image"></td>
+                                    <?php } else echo "<td></td>" ?>
                                     <td>
                                         <div class="btn-group">
                                             <a href="edit_car.php?id_salon=<?php echo $id_salon?>&mark=<?php echo $row['mark']?>&id_car=<?php echo $row['id_car']?>" class="btn btn-warning">Изменить</a>

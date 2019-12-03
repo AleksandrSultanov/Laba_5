@@ -7,14 +7,11 @@ if (isset($_GET['id_salon']))
     $id_salon = htmlspecialchars($_GET['id_salon']);
     $rez = edit_check($id_salon, "salon");
 }
+
 $row = row("salon", $id_salon);
 
 if ((isset($_POST['check']) && (isset($_POST['mark'])) && (isset($_POST['tel'])) && (isset($_POST['email']))))
-{
-    $salon = salon_array($_POST);
-    save($salon, "salon", $id_salon);
-    header('Location: index_salon.php?edit=');
-}
+    header_edit($_POST, $id_salon, $_FILES["user_file"]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,6 +70,12 @@ if ((isset($_POST['check']) && (isset($_POST['mark'])) && (isset($_POST['tel']))
         <div class="row">
             <div class="col-md-4 offset-md-4">
                 <h4 class="mb-3">Информация о салоне</h4>
+                <?php if(!empty($err_msg)) {?>
+                    <div class="alert alert-danger" role="alert">
+                        Произошла ошибка при загрузке файла!<br>
+                        Попробуйте снова.
+                    </div>
+                <?php } ?>
                 <?php if($rez == -1) {?>
                     <div class="alert alert-danger" role="alert">
                         Такого автосалона не существует!<br>
@@ -81,7 +84,7 @@ if ((isset($_POST['check']) && (isset($_POST['mark'])) && (isset($_POST['tel']))
                         Рекомендую вернуться на список всех автосолонов.<br>
                     </div>
                 <?php } ?>
-                    <form class="needs-validation" novalidate method = "POST">
+                    <form class="needs-validation" enctype="multipart/form-data" novalidate method = "POST">
                         <div class="mb-3">
                             <label for="mark">Марка</label>
                             <input type="mark" class="form-control" value="<?php echo $row["mark"]?>" name="mark" placeholder="Tesla" required maxlength = "32" pattern="\w*" >
@@ -104,6 +107,22 @@ if ((isset($_POST['check']) && (isset($_POST['mark'])) && (isset($_POST['tel']))
                             Электронная почта введена не верно.
                         </div>
                     </div>
+
+                    <div class="mb-3 custom-file">
+                        <input type="file" name="user_file"  class="custom-file-input" id="customFile">
+                        <label class="custom-file-label" for="customFile">Выберите файл</label>
+                        <div class="invalid-feedback">
+                            Добавьте изображение.
+                        </div>
+                    </div>
+
+                    <?php if($row['file_path'] != "0") { ?>
+                        <div class=" mb-3" >
+                            <label for="image">Текущее изображение</label><br>
+                            <input type="image" src="<?php echo $row['file_path']?>" class="img-thumbnail"  width="100"  alt="Responsive image">
+                            <br><br>
+                        </div>
+                    <?php } ?>
 
                     <input class="btn btn-primary btn-lg btn-block" name="check" value="Сохранить автосалон" type="submit">
                 </form>

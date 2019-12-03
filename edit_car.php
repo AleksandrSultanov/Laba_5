@@ -12,15 +12,7 @@ if (isset($_GET['id_car']) and isset($_GET['mark']))
 
 if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'])) &&
     (isset($_POST['cost'])) && (isset($_POST['mileage'])))
-{
-    $id_salon = htmlspecialchars($_GET['id_salon']);
-    $car = car_array($_POST, $mark);
-    save($car, 'car', $id_car);
-    if (isset($_GET['id_salon']))
-        header ("Location: index_car.php?mark=$mark&id_salon=$id_salon&edit=");
-    else
-        header ("Location: all_cars.php?id_car=$id_car");
-}
+    save_car($_POST, $_GET, $_FILES["user_file"], $mark, $id_car);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -78,6 +70,12 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-4 offset-md-4">
+                <?php if(!empty($err_msg)) {?>
+                    <div class="alert alert-danger" role="alert">
+                        Произошла ошибка при загрузке файла!<br>
+                        Попробуйте снова.
+                    </div>
+                <?php } ?>
                 <?php if($rez == -1) {?>
                     <div class="alert alert-danger" role="alert">
                             Такого автомобиля не существует!<br>
@@ -87,7 +85,7 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
                     </div>
                  <?php } ?>
                 <h4 class="mb-3">Характеристики автомобиля</h4>
-                <form class="needs-validation" novalidate method = "POST">
+                <form class="needs-validation" enctype="multipart/form-data" novalidate method = "POST">
 
                     <div class="mb-3">
                         <label for="model">Модель</label>
@@ -120,6 +118,22 @@ if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'
                             Пробег введен не верно.
                         </div>
                     </div>
+
+                    <div class="mb-3 custom-file">
+                        <input type="file" name="user_file"  class="custom-file-input" id="customFile">
+                        <label class="custom-file-label" for="customFile">Выберите файл</label>
+                        <div class="invalid-feedback">
+                            Добавьте изображение.
+                        </div>
+                    </div>
+
+                    <?php if($row['file_path'] != "0") { ?>
+                        <div class=" mb-3" >
+                            <label for="image">Текущее изображение</label><br>
+                            <input type="image" src="<?php echo $row['file_path']?>" class="img-thumbnail"  width="100"  alt="Responsive image">
+                            <br><br>
+                        </div>
+                    <?php } ?>
 
                     <input class="btn btn-primary btn-lg btn-block" name="check" value="Сохранить автомобиль" type="submit">
                 </form>

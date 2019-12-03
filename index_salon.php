@@ -8,8 +8,8 @@ if ((isset($_POST["id_salon"])))
 if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])) && (isset($_POST['email'])))
 {
     $salon = salon_array($_POST);
-    add_salon($salon, 'salon');
-    header('Location: index_salon.php');
+    $rez2 = add_salon($salon, $_FILES["user_file"],'salon');
+    header("Location: index_salon.php?add=$rez2");
 }
 
 $table = table('salon');
@@ -24,12 +24,10 @@ $table = table('salon');
 
     <title>Тачка.ру: Работа с БД (салоны)</title>
 
-    <!-- Bootstrap core CSS -->
-    <link rel="icon" href="pictures\favicon.png">
+    <link rel="icon" href="pictures/favicon.png">
     <link href="bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/css_main.css" rel="stylesheet">
     <link href="bootstrap/form-validation.css" rel="stylesheet">
-    <!-- Custom styles for this template -->
 </head>
 
 <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
@@ -68,7 +66,7 @@ $table = table('salon');
         <div class="row">
             <div class="col-md-4 order-md-1">
                 <h4 class="mb-3">Добавить автосалон</h4>
-                <form class="needs-validation" novalidate action="index_salon.php" method = "POST">
+                <form class="needs-validation" enctype="multipart/form-data" novalidate action="index_salon.php" method = "POST">
                     <div class="mb-3">
                         <label for="mark">Марка</label>
                         <input type="mark" class="form-control" name="mark"  placeholder="Tesla" value="" required maxlength = "32" pattern="\w*" >
@@ -92,6 +90,14 @@ $table = table('salon');
                         </div>
                     </div>
 
+                    <div class="mb-3 custom-file">
+                        <input type="file" name="user_file"  class="custom-file-input" id="customFile" required>
+                        <label class="custom-file-label" for="customFile">Выберите файл</label>
+                        <div class="invalid-feedback">
+                            Добавьте изображение.
+                        </div>
+                    </div>
+
                     <input class="btn btn-primary btn-lg btn-block" name="check" value="Добавить автосалон" type="submit">
                 </form>
             </div>
@@ -105,7 +111,7 @@ $table = table('salon');
                     <span class="text">Добавленные автосалоны</span>
                     <span class="badge badge-secondary badge-pill"><?php echo count($table);?></span>
                 </h4>
-                <?php if (isset($_GET['edit']) or (isset($rez) and ($rez === 1))) { ?>
+                <?php if ((isset($_GET['edit']) and ($_GET['edit'] == "true")) or (isset($rez) and ($rez === 1)) or ((isset($_GET['add'])) and  ($_GET['add'] == 1))) { ?>
                     <div class="alert alert-success" role="alert">
                         Действие произошло успешно!
                     </div>
@@ -117,6 +123,11 @@ $table = table('salon');
                         Сначала удалите все автомобили в автосалоне.
                     </div>
                 <?php } ?>
+                <?php if ((isset($rez2)) and (!is_int($rez2)) or ((isset($_GET['add'])) and  ($_GET['add'] == -1)) or ((isset($_GET['edit'])) and  ($_GET['edit'] == "false"))) { ?>
+                    <div class="alert alert-danger" role="alert">
+                        Произошла ошибка при добавлении файла!
+                    </div>
+                <?php } ?>
                 <ul class="list-group mb-3">
                     <table class="table">
                         <thead>
@@ -125,6 +136,7 @@ $table = table('salon');
                             <th scope="col">Марка</th>
                             <th scope="col">Номер</th>
                             <th scope="col">Email</th>
+                            <th scope="col">Изображение</th>
                             <th scope="col">Действия</th>
                         </tr>
                         </thead>
@@ -135,6 +147,9 @@ $table = table('salon');
                                 <td><a href="index_car.php?mark=<?php echo $row['mark']?>&id_salon=<?php echo $row['id_salon']?>"><?php echo $row['mark']?></a></td>
                                 <td><?php echo $row['number']?></td>
                                 <td><?php echo $row['email']?></td>
+                                <?php if($row['file_path'] != "0") { ?>
+                                <td><img src="<?php echo $row['file_path']?>" class="img-thumbnail" alt="Responsive image"></td>
+                                <?php } else echo "<td></td>" ?>
                                 <td>
                                     <div class="btn-group">
                                         <a href="edit_salon.php?id_salon=<?php echo $row['id_salon']?>" class="btn btn-warning">Изменить</a>

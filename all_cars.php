@@ -6,9 +6,6 @@ if ((isset($_POST["id_car"])))
     $rez1 = delete_car($_POST["id_car"]);
 
 $table = table('car');
-
-if (isset($_GET["id_car"]))
-    $rez2 = edit_check(htmlspecialchars($_GET["id_car"]), "car");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,7 +59,7 @@ if (isset($_GET["id_car"]))
 <main role="main">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-7 offset-md-3">
+            <div class="col-md-8 offset-md-2">
                 <h4 class="d-flex justify-content-between align-items-center mb-3">
                     <?php if(!$table){?>
                         <div class="alert alert-warning container" role="alert">
@@ -73,12 +70,12 @@ if (isset($_GET["id_car"]))
                     <span class="badge badge-secondary badge-pill"><?php echo count($table);?></span>
                 </h4>
                 <div class="mb-3">
-                    <?php if ((isset($rez1) and ($rez1 === 1)) or (isset($rez2) and ($rez2 === 1))) {  ?>
+                    <?php if ((isset($rez1) and ($rez1 === 1)) or ((isset($_GET["edit"] )) and ($_GET["edit"] == "true"))) {  ?>
                         <div class="alert alert-success" role="alert">
                             Действие произошло успешно!
                         </div>
                     <?php } ?>
-                    <?php if (((isset($rez1)) and ($rez1 === -1)) or (isset($rez2) and ($rez2 === -1))) { ?>
+                    <?php if (((isset($rez1)) and ($rez1 === -1)) or ((isset($_GET["edit"] )) and ($_GET["edit"] == "false"))) { ?>
                         <div class="alert alert-danger" role="alert">
                             Действие произошло с ошибкой!
                         </div>
@@ -94,6 +91,7 @@ if (isset($_GET["id_car"]))
                             <th scope="col">Год</th>
                             <th scope="col">Цена</th>
                             <th scope="col">Пробег</th>
+                            <th scope="col">Изображение</th>
                             <th scope="col">Действия</th>
                         </tr>
                         </thead>
@@ -106,6 +104,9 @@ if (isset($_GET["id_car"]))
                                 <td><?php echo $row['production_year']?></td>
                                 <td><?php echo $row['cost']?></td>
                                 <td><?php echo $row['mileage']?></td>
+                                <?php if($row['file_path'] != "0") { ?>
+                                    <td><img src="<?php echo $row['file_path']?>" class="img-thumbnail" alt="Responsive image"></td>
+                                <?php } else echo "<td></td>" ?>
                                 <td>
                                     <div class="btn-group">
                                         <a href="edit_car.php?mark=<?php echo $row['mark']?>&id_car=<?php echo $row['id_car']?>" class="btn btn-warning">Изменить</a>

@@ -1,31 +1,39 @@
 <?php
 require 'php/connect.php';
 
-function add_salon ($object, $db_name)
+function add_salon ($object, $FILES, $db_name)
 {
+
     $connect = connect();
+
+    $object["file_path"] = add_file($FILES);
+    if ($object["file_path"] == -1)
+        return -1;
+
     $row = 'NULL,';
     foreach ($object as $name => $value)
         $row .= ":$name,";
     $row = substr($row, 0, -1);
 
     $query = "INSERT INTO $db_name VALUES ($row)";
-    $connect->prepare($query)->execute($object);
-    $last_id = $connect->lastInsertId();
-    $connect = null;
-    return $last_id;
+    if (!$connect->prepare($query)->execute($object))
+        return -1;
+
+    return 1;
 }
 
-function add_car ($object, $db_name, $id_salon)
+function add_car ($object, $FILES, $db_name, $id_salon)
 {
     $connect = connect();
 
     $query = "SELECT * FROM salon WHERE id_salon=$id_salon";
-    var_dump($query);
     $stmt = $connect->prepare($query);
     $stmt->execute();
-    $check = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$check)
+    if (!$stmt->fetch(PDO::FETCH_ASSOC))
+        return -1;
+
+    $object["file_path"] = add_file($FILES);
+    if ($object["file_path"] == -1)
         return -1;
 
     $row = 'NULL,';
@@ -45,10 +53,42 @@ function add_car ($object, $db_name, $id_salon)
     return 1;
 }
 
+function add_file ($FILES)
+{
+    define("upload_dir",'user_file/');
+    if ($FILES["error"] !== UPLOAD_ERR_OK)
+        return -1;
+    $file_type = exif_imagetype($FILES["tmp_name"]);
+    $allowed = array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG);
+    if (!in_array($file_type, $allowed))
+        return -1;
+    $FILES["name"] = preg_replace("/[^A-Z0-9._-]/i", '_', $FILES["name"]);
 
-function save($object, $db_name, $id)
+    $i = 0;
+    $parts = pathinfo($FILES["name"]);
+    while (file_exists(upload_dir.$FILES["name"]))
+    {
+        $i++;
+        $FILES["name"] = $parts["filename"]. " " . "(" . $i . ")".  "." . $parts["extension"];
+    }
+
+    $upload_file = upload_dir.basename($FILES['name']);
+    if (!move_uploaded_file($FILES["tmp_name"], $upload_file))
+        return -1;
+    chmod($upload_file, 0644);
+    return $upload_file;
+}
+
+function save($object, $FILES, $db_name, $id)
 {
     $connect = connect();
+    if ($FILES == 0)
+        $object["file_path"] = 0;
+    else
+        $object["file_path"] = add_file($FILES);
+
+    if ($object["file_path"] == -1)
+        return -1;
 
     $row = '';
     foreach ($object as $key => $value)
@@ -58,6 +98,7 @@ function save($object, $db_name, $id)
     $query = "UPDATE $db_name SET $row WHERE id_$db_name=$id";
     $connect->prepare($query)->execute($object);
     $connect = null;
+    return 1;
 }
 
 function delete_car($id)
@@ -144,9 +185,10 @@ function row($db_name, $id)
 function salon_array($POST)
 {
     $salon = array();
-    $salon['mark']   = htmlspecialchars($POST['mark']);
-    $salon['number'] = htmlspecialchars($POST['tel']);
-    $salon['email']  = htmlspecialchars($POST['email']);
+    $salon['mark']       = htmlspecialchars($POST['mark']);
+    $salon['number']     = htmlspecialchars($POST['tel']);
+    $salon['email']      = htmlspecialchars($POST['email']);
+    $salon['file_path']  = "";
     return $salon;
 }
 
@@ -158,6 +200,7 @@ function car_array($POST, $mark)
     $car['production_year'] = htmlspecialchars($POST['year']);
     $car['cost']            = htmlspecialchars($POST['cost']);
     $car['mileage']         = htmlspecialchars($POST['mileage']);
+    $car['file_path']       = "";
     return $car;
 }
 
@@ -179,4 +222,50 @@ function edit_check ($id, $db_name)
         if ($row["id_$db_name"] == $id)
             return 1;
     return -1;
+}
+
+function save_car ($POST, $GET, $FILES, $mark, $id_car)
+{
+    $id_salon = htmlspecialchars($GET['id_salon']);
+    $car = car_array($POST, $mark);
+    if ($_FILES["user_file"]["name"] != "")
+        $save = save($car, $FILES, "car", $id_car);
+    else
+        $save = save($car, 0, "car", $id_car);
+
+    if (isset($GET['id_salon']) and ($save == 1))
+        header ("Location: index_car.php?mark=$mark&id_salon=$id_salon&edit=true");
+    if (isset($GET['id_salon']) and ($save == -1))
+        header ("Location: index_car.php?mark=$mark&id_salon=$id_salon&edit=false");
+    if (!isset($GET['id_salon']) and $save == -1)
+        header ("Location: all_cars.php?id_car=$id_car&edit=false");
+    if (!isset($GET['id_salon']) and $save == 1)
+        header ("Location: all_cars.php?id_car=$id_car&edit=true");
+}
+
+function add_c($POST, $GET, $FILES, $id_salon)
+{
+    $mark = htmlspecialchars($GET['mark']);
+    $car = car_array($POST, $mark);
+    $rez = add_car($car, $FILES, 'car', $id_salon);
+    if ($rez == 1)
+        header("Location: index_car.php?mark=$mark&id_salon=$id_salon");
+    else if ($rez == -1)
+        header("Location: index_car.php?mark=$mark&id_salon=$id_salon&add=false");
+    else
+        header('Location: index_salon.php');
+}
+
+function header_edit($POST, $id_salon, $FILES)
+{
+    $salon = salon_array($POST);
+    if (($FILES["name"] != ""))
+        if (save($salon, $FILES, "salon", $id_salon) == -1)
+            header('Location: index_salon.php?edit=false');
+        else
+            header('Location: index_salon.php?edit=true');
+    else {
+        save($salon, 0, "salon", $id_salon);
+        header('Location: index_salon.php?edit=true');
+    }
 }
