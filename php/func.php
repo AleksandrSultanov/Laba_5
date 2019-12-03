@@ -3,10 +3,9 @@ require 'php/connect.php';
 
 function add_salon ($object, $FILES, $db_name)
 {
-
     $connect = connect();
 
-    $object["file_path"] = add_file($FILES);
+    $object["file_path"] = add_file($FILES, $db_name, 0);
     if ($object["file_path"] == -1)
         return -1;
 
@@ -32,7 +31,7 @@ function add_car ($object, $FILES, $db_name, $id_salon)
     if (!$stmt->fetch(PDO::FETCH_ASSOC))
         return -1;
 
-    $object["file_path"] = add_file($FILES);
+    $object["file_path"] = add_file($FILES, "car", 0);
     if ($object["file_path"] == -1)
         return -1;
 
@@ -53,15 +52,21 @@ function add_car ($object, $FILES, $db_name, $id_salon)
     return 1;
 }
 
-function add_file ($FILES)
+function add_file ($FILES, $db_name, $id)
 {
     define("upload_dir",'user_file/');
+
     if ($FILES["error"] !== UPLOAD_ERR_OK)
         return -1;
+
     $file_type = exif_imagetype($FILES["tmp_name"]);
     $allowed = array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG);
     if (!in_array($file_type, $allowed))
         return -1;
+
+    if ($id != 0)
+        delete_file($db_name, $id);
+
     $FILES["name"] = preg_replace("/[^A-Z0-9._()-]/i", '_', $FILES["name"]);
 
     $i = 0;
@@ -79,30 +84,35 @@ function add_file ($FILES)
     return $upload_file;
 }
 
-function save($object, $FILES, $db_name, $id)
+function delete_file($db_name, $id)
 {
     $connect = connect();
-
     $query = "SELECT * FROM $db_name WHERE id_$db_name=$id";
     $stmt = $connect->prepare($query);
     $stmt->execute();
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row["file_path"] != "0")
         unlink($row["file_path"]);
+}
 
-    if ($FILES == 0)
+function save($object, $FILES, $db_name, $id)
+{
+    if ($FILES == 0) {
+        delete_file($db_name, $id);
         $object["file_path"] = 0;
-    else
-        $object["file_path"] = add_file($FILES);
-
-    if ($object["file_path"] == -1)
-        return -1;
+    }
+    else {
+        $object["file_path"] = add_file($FILES, $db_name, $id);
+        if ($object["file_path"] == -1)
+            return -1;
+    }
 
     $row = '';
     foreach ($object as $key => $value)
         $row .= "$key=:$key, ";
     $row = substr($row, 0, -2);
 
+    $connect = connect();
     $query = "UPDATE $db_name SET $row WHERE id_$db_name=$id";
     $connect->prepare($query)->execute($object);
     $connect = null;
@@ -114,12 +124,7 @@ function delete_car($id)
     $id = htmlspecialchars($id);
     $connect = connect();
 
-    $query = "SELECT * FROM car WHERE id_car=$id";
-    $stmt = $connect->prepare($query);
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row["file_path"] != "0")
-        unlink($row["file_path"]);
+    delete_file("car", $id);
 
     $query = "DELETE FROM car WHERE id_car=$id";
     $rez1 = $connect->prepare($query)->execute();
@@ -138,13 +143,6 @@ function delete_salon($id)
     $id = htmlspecialchars($id);
     $connect = connect();
 
-    $query = "SELECT * FROM salon WHERE id_salon=$id";
-    $stmt = $connect->prepare($query);
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($row["file_path"] != "0")
-        unlink($row["file_path"]);
-
     $query = "SELECT * FROM relation WHERE id_salon=$id";
     $stmt = $connect->prepare($query);
     $stmt->execute();
@@ -152,6 +150,7 @@ function delete_salon($id)
 
     if (!$check)
     {
+        delete_file("salon", $id);
         $query = "DELETE FROM salon WHERE id_salon=$id";
         $connect->prepare($query)->execute();
         $connect = null;
@@ -168,7 +167,7 @@ function delete_salon($id)
     return -1;
 }
 
-function table ($db_name)
+function table_for_all ($db_name)
 {
     $data = array();
     $connect = connect ();
@@ -246,7 +245,7 @@ function edit_check ($id, $db_name)
     return -1;
 }
 
-function save_car ($POST, $GET, $FILES, $mark, $id_car)
+function edit_car_php ($POST, $GET, $FILES, $mark, $id_car)
 {
     $id_salon = htmlspecialchars($GET['id_salon']);
     $car = car_array($POST, $mark);
@@ -266,7 +265,7 @@ function save_car ($POST, $GET, $FILES, $mark, $id_car)
         header ("Location: all_cars.php?id_car=$id_car&edit=true");
 }
 
-function add_c($POST, $GET, $FILES, $id_salon)
+function index_car_php($POST, $GET, $FILES, $id_salon)
 {
     $mark = htmlspecialchars($GET['mark']);
     $car = car_array($POST, $mark);
@@ -279,7 +278,7 @@ function add_c($POST, $GET, $FILES, $id_salon)
         header('Location: index_salon.php');
 }
 
-function header_edit($POST, $id_salon, $FILES)
+function edit_salon_php($POST, $id_salon, $FILES)
 {
     $salon = salon_array($POST);
     if (($FILES["name"] != ""))

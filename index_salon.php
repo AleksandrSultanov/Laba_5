@@ -12,7 +12,7 @@ if ((isset($_POST['check'])) && (isset($_POST['mark'])) && (isset($_POST['tel'])
     header("Location: index_salon.php?add=$rez2");
 }
 
-$table = table('salon');
+$table = table_for_all('salon');
 ?>
 <!DOCTYPE html>
 <html lang="en">

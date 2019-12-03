@@ -5,7 +5,7 @@ require 'php/func.php';
 if ((isset($_POST["id_car"])))
     $rez1 = delete_car($_POST["id_car"]);
 
-$table = table('car');
+$table = table_for_all('car');
 ?>
 <!DOCTYPE html>
 <html lang="en">

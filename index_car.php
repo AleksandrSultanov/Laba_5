@@ -11,7 +11,7 @@ $table = table_for_cars($id_salon); }
 else header('Location: index_salon.php');
 
 if ((isset($_POST['check'])) && (isset($_POST['model'])) && isset($_GET['mark']))
-    add_c($_POST, $_GET, $_FILES["user_file"], $id_salon);
+    index_car_php($_POST, $_GET, $_FILES["user_file"], $id_salon);
 ?>
 <!DOCTYPE html>
 <html lang="en">

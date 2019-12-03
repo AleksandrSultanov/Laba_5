@@ -12,7 +12,7 @@ if (isset($_GET['id_car']) and isset($_GET['mark']))
 
 if ((isset($_POST['check'])) && (isset($_POST['model'])) && (isset($_POST['year'])) &&
     (isset($_POST['cost'])) && (isset($_POST['mileage'])))
-    save_car($_POST, $_GET, $_FILES["user_file"], $mark, $id_car);
+    edit_car_php($_POST, $_GET, $_FILES["user_file"], $mark, $id_car);
 ?>
 <!DOCTYPE html>
 <html lang="en">

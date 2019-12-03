@@ -11,7 +11,7 @@ if (isset($_GET['id_salon']))
 $row = row("salon", $id_salon);
 
 if ((isset($_POST['check']) && (isset($_POST['mark'])) && (isset($_POST['tel'])) && (isset($_POST['email']))))
-    header_edit($_POST, $id_salon, $_FILES["user_file"]);
+    edit_salon_php($_POST, $id_salon, $_FILES["user_file"]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
