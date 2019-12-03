@@ -62,14 +62,14 @@ function add_file ($FILES)
     $allowed = array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG);
     if (!in_array($file_type, $allowed))
         return -1;
-    $FILES["name"] = preg_replace("/[^A-Z0-9._-]/i", '_', $FILES["name"]);
+    $FILES["name"] = preg_replace("/[^A-Z0-9._()-]/i", '_', $FILES["name"]);
 
     $i = 0;
     $parts = pathinfo($FILES["name"]);
     while (file_exists(upload_dir.$FILES["name"]))
     {
         $i++;
-        $FILES["name"] = $parts["filename"]. " " . "(" . $i . ")".  "." . $parts["extension"];
+        $FILES["name"] = $parts["filename"]. "_" . "(" . $i . ")".  "." . $parts["extension"];
     }
 
     $upload_file = upload_dir.basename($FILES['name']);
@@ -82,6 +82,14 @@ function add_file ($FILES)
 function save($object, $FILES, $db_name, $id)
 {
     $connect = connect();
+
+    $query = "SELECT * FROM $db_name WHERE id_$db_name=$id";
+    $stmt = $connect->prepare($query);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row["file_path"] != "0")
+        unlink($row["file_path"]);
+
     if ($FILES == 0)
         $object["file_path"] = 0;
     else
@@ -106,6 +114,13 @@ function delete_car($id)
     $id = htmlspecialchars($id);
     $connect = connect();
 
+    $query = "SELECT * FROM car WHERE id_car=$id";
+    $stmt = $connect->prepare($query);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row["file_path"] != "0")
+        unlink($row["file_path"]);
+
     $query = "DELETE FROM car WHERE id_car=$id";
     $rez1 = $connect->prepare($query)->execute();
 
@@ -122,6 +137,13 @@ function delete_salon($id)
 {
     $id = htmlspecialchars($id);
     $connect = connect();
+
+    $query = "SELECT * FROM salon WHERE id_salon=$id";
+    $stmt = $connect->prepare($query);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row["file_path"] != "0")
+        unlink($row["file_path"]);
 
     $query = "SELECT * FROM relation WHERE id_salon=$id";
     $stmt = $connect->prepare($query);
@@ -228,10 +250,11 @@ function save_car ($POST, $GET, $FILES, $mark, $id_car)
 {
     $id_salon = htmlspecialchars($GET['id_salon']);
     $car = car_array($POST, $mark);
-    if ($_FILES["user_file"]["name"] != "")
+    if ($FILES["name"] != "")
         $save = save($car, $FILES, "car", $id_car);
-    else
+    else {
         $save = save($car, 0, "car", $id_car);
+    }
 
     if (isset($GET['id_salon']) and ($save == 1))
         header ("Location: index_car.php?mark=$mark&id_salon=$id_salon&edit=true");
